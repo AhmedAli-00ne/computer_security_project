@@ -12,8 +12,8 @@ active_clients = []
 def listen_for_messages(client, username):
     while 1:
         message = client.recv(2048).decode("utf-8")
-        if message != '':
-            final_msg = username + '~' + message
+        if message != "":
+            final_msg = username + "~" + message
             send_messages_to_all(final_msg)
         else:
             print(f"The message send from client {username} is empty")

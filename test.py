@@ -83,9 +83,7 @@ def listen_for_messages_from_server(client):
                 username = message.split("~")[0]
                 PK = message.split("~")[1]
                 if myusername[0] != username:
-                    KeyPair["SessionKey"] = (
-                        int(PK) ** KeyPair["PrivateKey"] % 307
-                    )
+                    KeyPair["SessionKey"] = int(PK) ** KeyPair["PrivateKey"] % 307
             else:
                 messagebox.showerror("Error", "Message recevied from client is empty")
 
@@ -491,7 +489,7 @@ def RC4_encrypt_decrypt(plaintext, key):
 
 # ElGamal
 def encrypt_elgamal(plaintext_list):
-    p, g, h = (307, 5, KeyPair["SessionKey"])
+    p, g, h = (307, 5, KeyPair["PublicKey"])
     ciphertext_list = []
     plaintext_list = [ord(char) for char in plaintext_list]
     for char in plaintext_list:
@@ -502,19 +500,41 @@ def encrypt_elgamal(plaintext_list):
     return ciphertext_list
 
 
-def decrypt_elgamal(ciphertext_list):
-    list_of_tuples = [tuple(pair) for pair in ast.literal_eval(ciphertext_list)]
+def extract_numbers_from_string(input_string):
+    result = []
 
-    print(f"ciphertext_list : {list_of_tuples}")
-    p = KeyPair["SessionKey"]
+    current_number = ""
+    for char in input_string:
+        if char.isdigit():
+            current_number += char
+        elif current_number:
+            result.append(int(current_number))
+            current_number = ""
+
+    if current_number:
+        result.append(int(current_number))
+
+    return result
+
+
+def decrypt_elgamal(ciphertext_list):
+    result_list = extract_numbers_from_string(ciphertext_list)
+    ciphertext_list = []
+    for i in range(0, len(result_list)):
+        if (i == 0 or i % 2 == 0) and i != len(result_list):
+            ciphertext_list.append((result_list[i], result_list[i + 1]))
+
+    print(f"ciphertext_list : {ciphertext_list}")
+    p = 307
     dh_private_key = KeyPair["PrivateKey"]
     decrypted_list = []
 
-    for c1, c2 in list_of_tuples:
+    for c1, c2 in ciphertext_list:
         s = pow(c1, dh_private_key, p)  # Use dh_private_key instead of a
         s_inv = mod_inverse(s, p)
         plaintext = (c2 * s_inv) % p
         decrypted_list.append(plaintext)
+    print(f"decrypted_list : {decrypted_list}")
 
     decrypted_list = "".join(
         [chr(char) if 32 <= char <= 126 else "<?>" for char in decrypted_list]
@@ -584,8 +604,8 @@ def encrypt_button_click():
         ciphertext = encrypt_elgamal(message)
         print(f"ciphertext Elgamal : {ciphertext}")
 
-        # ciphertext_entry.delete(0, tk.END)
-        # ciphertext_entry.insert(0, ciphertext)
+        ciphertext_entry.delete(0, tk.END)
+        ciphertext_entry.insert(0, ciphertext)
     elif selected_val == "Two keys (RSA)":
         p = generate_random_prime()
         q = generate_random_prime()
