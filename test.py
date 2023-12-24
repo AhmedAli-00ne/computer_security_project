@@ -7,8 +7,6 @@ import secrets
 import tkinter as tk
 from sympy import mod_inverse
 from tkinter import ttk, scrolledtext, messagebox
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
 
 HOST = "192.168.100.3"
 PORT = 5555
@@ -114,23 +112,38 @@ def send_message():
         if selected_algorithm == "Caesar cipher":
             shift = random.randint(1, 10)
             encrypted_message = encrypt_caesar(message, shift)
+            decrypted_message = decrypt_caesar(encrypted_message, shift)
             client.sendto(
-                f"{encrypted_message}~{selected_algorithm}".encode(), (HOST, PORT)
+                f"{encrypted_message,decrypted_message}~{selected_algorithm}".encode(), (HOST, PORT)
             )
+             
         if selected_algorithm == "Two keys (RSA)":
             encrypted_message = rsa_encrypt(message, KeyPair["PublicKey"])
+            p = generate_random_prime()
+            q = generate_random_prime()
+            public_key, private_key = generate_keypair(p, q)
+            encrypted_message = rsa_encrypt(message, public_key)
+            decrypted_message = rsa_decrypt(encrypted_message, private_key)
             client.sendto(
-                f"{encrypted_message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode(),
+                f"{encrypted_message,decrypted_message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode(),
                 (HOST, PORT),
             )
         if selected_algorithm == "RC4":
             rc4_key = str(secrets.token_bytes(key_length_bits // 8))
             encrypted_message, decrypted_result = RC4_encrypt_decrypt(message, rc4_key)
             client.sendto(
-                f"{encrypted_message}~{selected_algorithm}".encode(), (HOST, PORT)
+                f"{encrypted_message,decrypted_result}~{selected_algorithm}".encode(), (HOST, PORT)
+            )
+        if selected_algorithm == "Single key (DES)":
+              encrypted_message = encrypt_caesar(message, shift)
+              decrypted_message = decrypt_caesar(encrypted_message, shift)
+              client.sendto(
+                f"{encrypted_message,decrypted_message}~{selected_algorithm}".encode(), (HOST, PORT)
             )
         if selected_algorithm == "Two keys (EL GAMAL)":
+            ciphertext_hex = ciphertext_entry.get()
             encrypt_elgamal(message)
+            decrypted_message = decrypt_elgamal(ciphertext_hex)
             client.sendto(
                 f"{encrypted_message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode(),
                 (HOST, PORT),
@@ -329,13 +342,13 @@ def des_encrypt(pt, rkb, rk):
 	left = pt[0:32]
 	right = pt[32:64]
 	for i in range(0, 16):
-		# Expansion D-box: Expanding the 32 bits data into 48 bits
+		# EP
 		right_expanded = permute(right, exp_d, 48)
 
-		# XOR RoundKey[i] and right_expanded
+		#XOR WITH Key
 		xor_x = xor(right_expanded, rkb[i])
 
-		# S-boxex: substituting the value from s-box table by calculating row and column
+		# S-boxex:
 		sbox_str = ""
 		for j in range(0, 8):
 			row = bin2dec(int(xor_x[j * 6] + xor_x[j * 6 + 5]))
@@ -344,10 +357,10 @@ def des_encrypt(pt, rkb, rk):
 			val = sbox[j][row][col]
 			sbox_str = sbox_str + dec2bin(val)
 
-		# Straight D-box: After substituting rearranging the bits
+		
 		sbox_str = permute(sbox_str, per, 32)
 
-		# XOR left and sbox_str
+		# XOR WITH LEFT
 		result = xor(left, sbox_str)
 		left = result
 
