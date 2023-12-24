@@ -4,14 +4,10 @@ import random
 import math
 import secrets
 import tkinter as tk
+from sympy import mod_inverse
 from tkinter import ttk, scrolledtext, messagebox
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
-
-# from Crypto.Cipher import DES
-# from Crypto.Random import get_random_bytes
-# from Crypto.Util.Padding import pad, unpad
-#
 
 HOST = "192.168.100.3"
 PORT = 5555
@@ -146,10 +142,6 @@ def send_message():
     message = message_textbox.get()
     selected_algorithm = combo_var.get()
     if message != "":
-        if selected_algorithm == "Single key (DES)":
-            key = b"8bytekey"  # Use an 8-byte key for DES
-            encrypted_message = encrypt_des(message, key)
-            client.sendall(f"{encrypted_message}~{selected_algorithm}".encode())
         if selected_algorithm == "Caesar cipher":
             shift = random.randint(1, 10)
             encrypted_message = encrypt_caesar(message, shift)
@@ -163,6 +155,11 @@ def send_message():
             rc4_key = str(secrets.token_bytes(key_length_bits // 8))
             encrypted_message, decrypted_result = RC4_encrypt_decrypt(message, rc4_key)
             client.sendall(f"{encrypted_message}~{selected_algorithm}".encode())
+        if selected_algorithm == "Elgamal":
+            encrypt_elgamal(message)
+            client.sendall(
+                f"{encrypted_message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode()
+            )
         else:
             client.sendall(
                 f"{message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode()
@@ -375,20 +372,20 @@ def send_message():
 # print(f'Decrypted Block: {decrypted_block:x}')
 
 
-def generate_des_key():
-    return get_random_bytes(8)
+# def generate_des_key():
+#     return get_random_bytes(8)
 
 
-def encrypt_des(message, key):
-    cipher = DES.new(key, DES.MODE_ECB)
-    ciphertext = cipher.encrypt(pad(message.encode("utf-8"), DES.block_size))
-    return ciphertext
+# def encrypt_des(message, key):
+#     cipher = DES.new(key, DES.MODE_ECB)
+#     ciphertext = cipher.encrypt(pad(message.encode("utf-8"), DES.block_size))
+#     return ciphertext
 
 
-def decrypt_des(ciphertext, key):
-    cipher = DES.new(key, DES.MODE_ECB)
-    decrypted_message = unpad(cipher.decrypt(ciphertext), DES.block_size)
-    return decrypted_message.decode("utf-8")
+# def decrypt_des(ciphertext, key):
+#     cipher = DES.new(key, DES.MODE_ECB)
+#     decrypted_message = unpad(cipher.decrypt(ciphertext), DES.block_size)
+#     return decrypted_message.decode("utf-8")
 
 
 # caesar cipher
@@ -516,6 +513,33 @@ def RC4_encrypt_decrypt(plaintext, key):
         decrypted_data += chr(ciphertext[i] ^ K[i])
 
     return encrypted_data, decrypted_data
+
+
+# ElGamal
+def encrypt_elgamal(plaintext_list):
+    p, g, h = (307, 5, KeyPair["SessionKey"])
+    ciphertext_list = []
+
+    for char in plaintext_list:
+        k = random.randint(1, p - 2)
+        c1 = pow(g, k, p)
+        c2 = (pow(h, k, p) * char) % p
+        ciphertext_list.append((c1, c2))
+
+    return ciphertext_list
+
+
+def decrypt_elgamal(ciphertext_list):
+    p, _, _ = KeyPair["SessionKey"]
+    dh_private_key = KeyPair["PrivateKey"]
+    decrypted_list = []
+
+    for c1, c2 in ciphertext_list:
+        s = pow(c1, dh_private_key, p)  # Use dh_private_key instead of a
+        s_inv = mod_inverse(s, p)
+        plaintext = (c2 * s_inv) % p
+        decrypted_list.append(plaintext)
+    return decrypted_list
 
 
 # -------------------------------------------------------------Algorithm------------------------------------------------------------------------
