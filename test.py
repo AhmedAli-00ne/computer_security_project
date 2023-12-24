@@ -106,23 +106,38 @@ def send_message():
         if selected_algorithm == "Caesar cipher":
             shift = random.randint(1, 10)
             encrypted_message = encrypt_caesar(message, shift)
+            decrypted_message = decrypt_caesar(encrypted_message, shift)
             client.sendto(
-                f"{encrypted_message}~{selected_algorithm}".encode(), (HOST, PORT)
+                f"{encrypted_message,decrypted_message}~{selected_algorithm}".encode(), (HOST, PORT)
             )
+             
         if selected_algorithm == "Two keys (RSA)":
             encrypted_message = rsa_encrypt(message, KeyPair["PublicKey"])
+            p = generate_random_prime()
+            q = generate_random_prime()
+            public_key, private_key = generate_keypair(p, q)
+            encrypted_message = rsa_encrypt(message, public_key)
+            decrypted_message = rsa_decrypt(encrypted_message, private_key)
             client.sendto(
-                f"{encrypted_message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode(),
+                f"{encrypted_message,decrypted_message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode(),
                 (HOST, PORT),
             )
         if selected_algorithm == "RC4":
             rc4_key = str(secrets.token_bytes(key_length_bits // 8))
             encrypted_message, decrypted_result = RC4_encrypt_decrypt(message, rc4_key)
             client.sendto(
-                f"{encrypted_message}~{selected_algorithm}".encode(), (HOST, PORT)
+                f"{encrypted_message,decrypted_result}~{selected_algorithm}".encode(), (HOST, PORT)
+            )
+        if selected_algorithm == "Single key (DES)":
+              encrypted_message = encrypt_caesar(message, shift)
+              decrypted_message = decrypt_caesar(encrypted_message, shift)
+              client.sendto(
+                f"{encrypted_message,decrypted_message}~{selected_algorithm}".encode(), (HOST, PORT)
             )
         if selected_algorithm == "Two keys (EL GAMAL)":
+            ciphertext_hex = ciphertext_entry.get()
             encrypt_elgamal(message)
+            decrypted_message = decrypt_elgamal(ciphertext_hex)
             client.sendto(
                 f"{encrypted_message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode(),
                 (HOST, PORT),
