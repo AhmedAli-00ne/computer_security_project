@@ -593,8 +593,8 @@ def encrypt_button_click():
         ciphertext = encrypt_elgamal(message)
         print(f"ciphertext Elgamal : {ciphertext}")
 
-        ciphertext_entry.delete(0, tk.END)
-        ciphertext_entry.insert(0, ciphertext)
+        # ciphertext_entry.delete(0, tk.END)
+        # ciphertext_entry.insert(0, ciphertext)
     elif selected_val == "Two keys (RSA)":
         p = generate_random_prime()
         q = generate_random_prime()
