@@ -140,7 +140,7 @@ def on_combobox_select(event):
 
 def send_message():
     message = message_textbox.get()
-    selected_algorithm = combo_var.get()
+    # selected_algorithm = combo_var.get()
     if message != "":
         if selected_algorithm == "Caesar cipher":
             shift = random.randint(1, 10)
@@ -155,7 +155,7 @@ def send_message():
             rc4_key = str(secrets.token_bytes(key_length_bits // 8))
             encrypted_message, decrypted_result = RC4_encrypt_decrypt(message, rc4_key)
             client.sendall(f"{encrypted_message}~{selected_algorithm}".encode())
-        if selected_algorithm == "Elgamal":
+        if selected_algorithm == "Two keys (EL GAMAL)":
             encrypt_elgamal(message)
             client.sendall(
                 f"{encrypted_message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode()
@@ -519,13 +519,12 @@ def RC4_encrypt_decrypt(plaintext, key):
 def encrypt_elgamal(plaintext_list):
     p, g, h = (307, 5, KeyPair["SessionKey"])
     ciphertext_list = []
-
+    plaintext_list = [ord(char) for char in plaintext_list]
     for char in plaintext_list:
         k = random.randint(1, p - 2)
         c1 = pow(g, k, p)
         c2 = (pow(h, k, p) * char) % p
         ciphertext_list.append((c1, c2))
-
     return ciphertext_list
 
 
@@ -539,6 +538,10 @@ def decrypt_elgamal(ciphertext_list):
         s_inv = mod_inverse(s, p)
         plaintext = (c2 * s_inv) % p
         decrypted_list.append(plaintext)
+    decrypted_list = "".join(
+        [chr(char) if 32 <= char <= 126 else "<?>" for char in decrypted_list]
+    )
+    print(f"decrypted_list Elgamal : {decrypted_list}")
     return decrypted_list
 
 
@@ -568,6 +571,12 @@ def encrypt_button_click():
         ciphertext = encrypt_caesar(message, shift)
         ciphertext_entry.delete(0, tk.END)
         ciphertext_entry.insert(0, ciphertext)
+    elif selected_val == "Two keys (EL GAMAL)":
+        ciphertext = encrypt_elgamal(message)
+        print(f"ciphertext Elgamal : {ciphertext}")
+
+        ciphertext_entry.delete(0, tk.END)
+        ciphertext_entry.insert(0, ciphertext)
     elif selected_val == "Two keys (RSA)":
         p = generate_random_prime()
         q = generate_random_prime()
@@ -578,7 +587,6 @@ def encrypt_button_click():
             encrypted_message = encrypt(message, public_key)
             ciphertext_entry.delete(0, tk.END)
             ciphertext_entry.insert(0, encrypted_message)
-
     elif selected_val == "RC4":
         encrypted_result, decrypted_result = RC4_encrypt_decrypt(message, rc4_key)
         ciphertext_entry.delete(0, tk.END)
@@ -601,6 +609,11 @@ def decrypt_button_click():
     elif selected_val == "Caesar cipher":
         shift = random.randint(1, 10)
         decrypted_message = decrypt_caesar(ciphertext_hex, shift)
+        decrypted_entry.delete(0, tk.END)
+        decrypted_entry.insert(0, decrypted_message)
+    elif selected_val == "Two keys (EL GAMAL)":
+        decrypted_message = decrypt_elgamal(message)
+        print(f"decrypted_message Elgamal : {decrypted_message}")
         decrypted_entry.delete(0, tk.END)
         decrypted_entry.insert(0, decrypted_message)
     elif selected_val == "Two keys (RSA)":
