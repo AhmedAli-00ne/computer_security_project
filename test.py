@@ -10,7 +10,7 @@ from tkinter import ttk, scrolledtext, messagebox
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 
-HOST = "192.168.100.3"
+HOST = "192.168.1.18"
 PORT = 5555
 
 DARK_GREY = "#121212"
@@ -83,9 +83,7 @@ def listen_for_messages_from_server(client):
                 username = message.split("~")[0]
                 PK = message.split("~")[1]
                 if myusername[0] != username:
-                    KeyPair["SessionKey"] = (
-                        int(PK) ** KeyPair["PrivateKey"] % 307
-                    )
+                    KeyPair["SessionKey"] = int(PK) ** KeyPair["PrivateKey"] % 307
             else:
                 messagebox.showerror("Error", "Message recevied from client is empty")
 
@@ -99,50 +97,6 @@ def add_message(message):
 def on_combobox_select(event):
     selected_value = combo_var.get()
     print(f"Selected value: {selected_value}")
-
-    # if selected_value == "Single key (DES)":
-    #     public_key_textbox.config(state=tk.DISABLED)
-    #     shift_textbox.config(state=tk.DISABLED)
-    #     private_key_textbox.config(state=tk.NORMAL)
-    # elif selected_value == "Caesar cipher":
-    #     public_key_textbox.config(state=tk.DISABLED)
-    #     private_key_textbox.config(state=tk.DISABLED)
-    #     P_textbox.config(state=tk.DISABLED)
-    #     q_textbox.config(state=tk.DISABLED)
-    #     RC4_textbox.config(state=tk.DISABLED)
-    #     shift_textbox.config(state=tk.NORMAL)
-    # elif selected_value == "Two keys (RSA)":
-    #     public_key_textbox.config(state=tk.DISABLED)
-    #     private_key_textbox.config(state=tk.DISABLED)
-    #     RC4_textbox.config(state=tk.DISABLED)
-    #     shift_textbox.config(state=tk.DISABLED)
-    #     P_textbox.config(state=tk.NORMAL)
-    #     q_textbox.config(state=tk.NORMAL)
-    # elif selected_value == "RC4":
-    #     public_key_textbox.config(state=tk.DISABLED)
-    #     private_key_textbox.config(state=tk.DISABLED)
-    #     shift_textbox.config(state=tk.DISABLED)
-    #     P_textbox.config(state=tk.DISABLED)
-    #     q_textbox.config(state=tk.DISABLED)
-    #     RC4_textbox.config(state=tk.NORMAL)
-
-
-# def display_message(message):
-#     message_box.config(state=tk.NORMAL)
-#     message_box.insert(tk.END, message + "\n")
-#     message_box.config(state=tk.DISABLED)
-#     message_box.see(tk.END)
-# def receive_messages(sock):
-#     while True:
-#         try:
-#             data = sock.recv(1024)
-#             if not data:
-#                 break
-#             decrypted_message = decrypt_des(data, des_key)
-#             display_message(decrypted_message)
-#         except Exception as e:
-#             print("Error receiving message:", str(e))
-#             break
 
 
 def send_message():
@@ -184,222 +138,6 @@ def send_message():
 
 
 # ---------------------------------------------------------------algorithms------------------------------------------------------------------------
-
-# DES ALGORITHM
-# def bin_to_hexa(msg):
-#   mp = {"0000" : '0',
-#         "0001" : '1',
-#         "0010" : '2',
-#         "0011" : '3',
-#         "0100" : '4',
-#         "0101" : '5',
-#         "0110" : '6',
-#         "0111" : '7',
-#         "1000" : '8',
-#         "1001" : '9',
-#         "1010" : 'A',
-#         "1011" : 'B',
-#         "1100" : 'C',
-#         "1101" : 'D',
-#         "1110" : 'E',
-#         "1111" : 'F' }
-#   hex=""
-#   for i in range(0,len(msg),4):
-#     ch=""
-#     ch=ch+msg[i]
-#     ch=ch+msg[i+1]
-#     ch=ch+msg[i+2]
-#     ch=ch+msg[i+3]
-#     hex=hex+mp[ch]
-#   return hex
-# def initial_permutation(block):
-#     # Initial permutation table (1-based index)
-#     ip_table = [
-#         58, 50, 42, 34, 26, 18, 10, 2,
-#         60, 52, 44, 36, 28, 20, 12, 4,
-#         62, 54, 46, 38, 30, 22, 14, 6,
-#         64, 56, 48, 40, 32, 24, 16, 8,
-#         57, 49, 41, 33, 25, 17, 9, 1,
-#         59, 51, 43, 35, 27, 19, 11, 3,
-#         61, 53, 45, 37, 29, 21, 13, 5,
-#         63, 55, 47, 39, 31, 23, 15, 7
-#     ]
-
-#     # Apply the initial permutation
-#     permuted_block = 0
-#     for i, bit in enumerate(ip_table):
-#         permuted_block |= ((block >> (64 - bit)) & 0x1) << (63 - i)
-
-#     return permuted_block
-
-# def final_permutation(block):
-#     # The final permutation is the inverse of the initial permutation
-#     final_permutation_table = [
-#         40, 8, 48, 16, 56, 24, 64, 32,
-#         39, 7, 47, 15, 55, 23, 63, 31,
-#         38, 6, 46, 14, 54, 22, 62, 30,
-#         37, 5, 45, 13, 53, 21, 61, 29,
-#         36, 4, 44, 12, 52, 20, 60, 28,
-#         35, 3, 43, 11, 51, 19, 59, 27,
-#         34, 2, 42, 10, 50, 18, 58, 26,
-#         33, 1, 41, 9, 49, 17, 57, 25
-#     ]
-
-#     # Apply the final permutation table
-#     permuted_block = 0
-#     for i, bit_position in enumerate(final_permutation_table):
-#         bit_value = (block >> (64 - bit_position)) & 1
-#         permuted_block |= bit_value << i
-
-#     return permuted_block
-
-# def feistel_network(right_half, subkey):
-#     # Example Feistel function using XOR
-#     expanded_right_half = expand(right_half)
-#     xored_data = expanded_right_half ^ subkey
-#     substituted_data = substitute(xored_data)
-#     permuted_data = permute(substituted_data)
-#     return right_half ^ permuted_data
-
-# def expand(data):
-#     # Implement the expansion function
-#     expansion_table = [
-#         32,  1,  2,  3,  4,  5,
-#          4,  5,  6,  7,  8,  9,
-#          8,  9, 10, 11, 12, 13,
-#         12, 13, 14, 15, 16, 17,
-#         16, 17, 18, 19, 20, 21,
-#         20, 21, 22, 23, 24, 25,
-#         24, 25, 26, 27, 28, 29,
-#         28, 29, 30, 31, 32,  1
-#     ]
-
-#     expanded_data = 0
-#     for i, bit_position in enumerate(expansion_table):
-#         # Get the bit at the specified position in the original data
-#         original_bit = (data >> (32 - bit_position)) & 0x01
-#         # Set the corresponding bit in the expanded data
-#         expanded_data |= original_bit << (47 - i)
-
-#     return expanded_data
-
-# def substitute(data):
-#     # Implement the substitution function
-#     substitution_boxes = [
-#         [
-#             # S-box 1
-#             [14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7],
-#             [0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8],
-#             [4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0],
-#             [15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13]
-#         ],
-#         [
-#             # S-box 2
-#             [15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10],
-#             [3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5],
-#             [0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15],
-#             [13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9]
-#         ],
-#         # Include S-boxes 3 to 8
-#         # ...
-#     ]
-
-#     # Divide the 48-bit data into 6-bit chunks
-#     chunks = [(data >> i) & 0x3F for i in range(42, -1, -6)]
-
-#     # Apply substitution for each 6-bit chunk using the corresponding S-box
-#     substituted_data = 0
-#     for i, chunk in enumerate(chunks):
-#         row = ((chunk & 0x20) >> 4) | (chunk & 0x01)  # Extract row bits
-#         col = (chunk >> 1) & 0x0F  # Extract column bits
-#         substituted_value = substitution_boxes[i][row][col]  # Lookup in S-box
-#         substituted_data |= substituted_value << (46 - (i * 4))
-
-#     return substituted_data
-
-# def permute(data, permutation_table):
-#     # Implement the permutation function
-#     permuted_data = 0
-#     for i, position in enumerate(permutation_table):
-#         bit = (data >> (32 - position)) & 0x01
-#         permuted_data |= bit << (31 - i)
-
-#     return permuted_data
-
-# def des_round(left_half, right_half, subkey):
-#     # Implement a single DES round
-#     expanded_right_half = expand(right_half)
-#     xor_result = expanded_right_half ^ subkey
-#     substituted_data = substitute(xor_result)
-#     permuted_data = permute(substituted_data, [16, 7, 20, 21, 29, 12, 28, 17,
-#                                                 1, 15, 23, 26, 5, 18, 31, 10,
-#                                                 2, 8, 24, 14, 32, 27, 3, 9,
-#                                                 19, 13, 30, 6, 22, 11, 4, 25])
-
-#     new_right_half = left_half ^ permuted_data
-#     new_left_half = right_half
-
-#     return new_left_half, new_right_half
-
-# def generate_subkeys(key):
-#     # Replace the following line with the actual subkey generation logic
-#     subkeys = [key] * 16  # Placeholder logic, replace with DES key schedule
-
-#     return subkeys
-
-# def encrypt_des(block, key):
-#     # Implement DES encryption for a single block
-#     subkeys = generate_subkeys(key)
-#     block = initial_permutation(block)
-
-#     left_half, right_half = block >> 32, block & 0xFFFFFFFF
-#     for subkey in subkeys:
-#         left_half, right_half = des_round(left_half, right_half, subkey)
-
-#     block = (right_half << 32) | left_half
-#     block = final_permutation(block)
-
-#     return block
-
-# def decrypt_des(block, key):
-
-#     # Implement DES decryption for a single block
-#     subkeys = generate_subkeys(key)
-#     block = initial_permutation(block)
-
-#     left_half, right_half = block >> 32, block & 0xFFFFFFFF
-#     for subkey in reversed(subkeys):
-#         left_half, right_half = des_round(left_half, right_half, subkey)
-
-#     block = (right_half << 32) | left_half
-#     block = final_permutation(block)
-
-#     return block
-
-# key = 0x133457799BBCDFF1  # Replace with your key
-# plaintext_block = 0x0123456789ABCDEF  # Replace with your plaintext block
-
-# ciphertext_block = encrypt_des(plaintext_block, key)
-# print(f'Ciphertext: {ciphertext_block:x}')
-
-# decrypted_block = decrypt_des(ciphertext_block, key)
-# print(f'Decrypted Block: {decrypted_block:x}')
-
-
-# def generate_des_key():
-#     return get_random_bytes(8)
-
-
-# def encrypt_des(message, key):
-#     cipher = DES.new(key, DES.MODE_ECB)
-#     ciphertext = cipher.encrypt(pad(message.encode("utf-8"), DES.block_size))
-#     return ciphertext
-
-
-# def decrypt_des(ciphertext, key):
-#     cipher = DES.new(key, DES.MODE_ECB)
-#     decrypted_message = unpad(cipher.decrypt(ciphertext), DES.block_size)
-#     return decrypted_message.decode("utf-8")
 
 
 # caesar cipher
@@ -531,7 +269,7 @@ def RC4_encrypt_decrypt(plaintext, key):
 
 # ElGamal
 def encrypt_elgamal(plaintext_list):
-    p, g, h = (307, 5, KeyPair["SessionKey"])
+    p, g, h = (307, 5, KeyPair["PublicKey"])
     ciphertext_list = []
     plaintext_list = [ord(char) for char in plaintext_list]
     for char in plaintext_list:
@@ -542,19 +280,41 @@ def encrypt_elgamal(plaintext_list):
     return ciphertext_list
 
 
-def decrypt_elgamal(ciphertext_list):
-    list_of_tuples = [tuple(pair) for pair in ast.literal_eval(ciphertext_list)]
+def extract_numbers_from_string(input_string):
+    result = []
 
-    print(f"ciphertext_list : {list_of_tuples}")
-    p = KeyPair["SessionKey"]
+    current_number = ""
+    for char in input_string:
+        if char.isdigit():
+            current_number += char
+        elif current_number:
+            result.append(int(current_number))
+            current_number = ""
+
+    if current_number:
+        result.append(int(current_number))
+
+    return result
+
+
+def decrypt_elgamal(ciphertext_list):
+    result_list = extract_numbers_from_string(ciphertext_list)
+    ciphertext_list = []
+    for i in range(0, len(result_list)):
+        if (i == 0 or i % 2 == 0) and i != len(result_list):
+            ciphertext_list.append((result_list[i], result_list[i + 1]))
+
+    print(f"ciphertext_list : {ciphertext_list}")
+    p = 307
     dh_private_key = KeyPair["PrivateKey"]
     decrypted_list = []
 
-    for c1, c2 in list_of_tuples:
+    for c1, c2 in ciphertext_list:
         s = pow(c1, dh_private_key, p)  # Use dh_private_key instead of a
         s_inv = mod_inverse(s, p)
         plaintext = (c2 * s_inv) % p
         decrypted_list.append(plaintext)
+    print(f"decrypted_list : {decrypted_list}")
 
     decrypted_list = "".join(
         [chr(char) if 32 <= char <= 126 else "<?>" for char in decrypted_list]
@@ -579,12 +339,6 @@ def encrypt_button_click():
     # des_key=pad(des_key)
     if selected_val == "Single key (DES)":
         message = message_textbox.get()
-    #     message=pad(message)
-    #     des_key= public_key_textbox.get()
-    #     des_key=pad(des_key)
-    #     ciphertexts = (encrypt_des(message, des_key))
-    #     ciphertext_entry.delete(0, tk.END)
-    #     ciphertext_entry.insert(0, ciphertexts)
     elif selected_val == "Caesar cipher":
         shift = random.randint(1, 10)
         ciphertext = encrypt_caesar(message, shift)
@@ -594,8 +348,8 @@ def encrypt_button_click():
         ciphertext = encrypt_elgamal(message)
         print(f"ciphertext Elgamal : {ciphertext}")
 
-        # ciphertext_entry.delete(0, tk.END)
-        # ciphertext_entry.insert(0, ciphertext)
+        ciphertext_entry.delete(0, tk.END)
+        ciphertext_entry.insert(0, ciphertext)
     elif selected_val == "Two keys (RSA)":
         p = generate_random_prime()
         q = generate_random_prime()
