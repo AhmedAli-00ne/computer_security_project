@@ -11,7 +11,6 @@ from cryptography.hazmat.backends import default_backend
 # from Crypto.Cipher import DES
 # from Crypto.Random import get_random_bytes
 # from Crypto.Util.Padding import pad, unpad
-#
 
 HOST = "192.168.100.3"
 PORT = 5555
@@ -28,7 +27,7 @@ KeyPair = {}
 # Creating a socket object
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 selected_algorithm = None
-
+myusername = []
 
 def GenerateKeyPair():
     Prime = 307
@@ -41,11 +40,9 @@ def GenerateKeyPair():
 def connect():
     # Get the IP address from the entry widget
     ip_address = ip_textbox.get()
-
     # Use the entered IP address or the default one if empty
     if ip_address == "":
         ip_address = HOST
-
     try:
         # Connect to the server
         client.connect((ip_address, PORT))
@@ -57,15 +54,12 @@ def connect():
             "Unable to connect to server",
             f"Unable to connect to server {ip_address} {PORT}",
         )
-
-    username = username_textbox.get()
-    if username != "":
-        client.sendall(username.encode())
+    myusername.append(username_textbox.get())
+    if myusername[0] != "":
+        client.sendto(f"{myusername[0]}~{KeyPair['PublicKey']}".encode(), (HOST, PORT))
     else:
         messagebox.showerror("Invalid username", "Username cannot be empty")
-
     threading.Thread(target=listen_for_messages_from_server, args=(client,)).start()
-
     username_textbox.config(state=tk.DISABLED)
     username_button.config(state=tk.DISABLED)
 
@@ -73,24 +67,36 @@ def connect():
 def listen_for_messages_from_server(client):
     while 1:
         message = client.recv(2048).decode("utf-8")
-
-        if message != "":
-            username = message.split("~")[0]
-            content = message.split("~")[1]
-            KeyPair["SessionKey"] = (
-                int(message.split("~")[3]) ** KeyPair["PrivateKey"] % 307
-            )
-            PK = message.split("~")[3]
-            print(message)
-            add_message(f"[{username},{PK},{KeyPair['SessionKey']}] {content}")
+        if len(message.split("~")) > 2:
+            if message != "":
+                username = message.split("~")[0]
+                content = message.split("~")[1]
+                if myusername[0] != username:
+                    KeyPair["SessionKey"] = (
+                        int(message.split("~")[3]) ** KeyPair["PrivateKey"] % 307
+                    )
+                PK = message.split("~")[3]
+                add_message(f"[{username}] {content}")
+            else:
+                messagebox.showerror("Error", "Message recevied from client is empty")
         else:
-            messagebox.showerror("Error", "Message recevied from client is empty")
+            if message != "":
+                username = message.split("~")[0]
+                PK = message.split("~")[1]
+                if myusername[0] != username:
+                    KeyPair["SessionKey"] = (
+                        int(PK) ** KeyPair["PrivateKey"] % 307
+                    )
+                print(message)
+            else:
+                messagebox.showerror("Error", "Message recevied from client is empty")
 
 
 def add_message(message):
     message_box.config(state=tk.NORMAL)
     message_box.insert(tk.END, message + "\n")
     message_box.config(state=tk.DISABLED)
+    print(myusername)
 
 
 def on_combobox_select(event):
@@ -149,23 +155,25 @@ def send_message():
         if selected_algorithm == "Single key (DES)":
             key = b"8bytekey"  # Use an 8-byte key for DES
             encrypted_message = encrypt_des(message, key)
-            client.sendall(f"{encrypted_message}~{selected_algorithm}".encode())
+            client.sendto(f"{encrypted_message}~{selected_algorithm}".encode(), (HOST, PORT))
         if selected_algorithm == "Caesar cipher":
             shift = random.randint(1, 10)
             encrypted_message = encrypt_caesar(message, shift)
-            client.sendall(f"{encrypted_message}~{selected_algorithm}".encode())
+            client.sendto(f"{encrypted_message}~{selected_algorithm}".encode(), (HOST, PORT))
         if selected_algorithm == "Two keys (RSA)":
             encrypted_message = encrypt(message, KeyPair["PublicKey"])
-            client.sendall(
-                f"{encrypted_message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode()
+            client.sendto(
+                f"{encrypted_message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode(),
+                (HOST, PORT)
             )
         if selected_algorithm == "RC4":
             rc4_key = str(secrets.token_bytes(key_length_bits // 8))
             encrypted_message, decrypted_result = RC4_encrypt_decrypt(message, rc4_key)
-            client.sendall(f"{encrypted_message}~{selected_algorithm}".encode())
+            client.sendto(f"{encrypted_message}~{selected_algorithm}".encode(), (HOST, PORT))
         else:
-            client.sendall(
-                f"{message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode()
+            client.sendto(
+                f"{message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode(),
+                (HOST, PORT)
             )
         message_textbox.delete(0, len(message))
     else:
