@@ -2,6 +2,7 @@ import socket
 import threading
 import random
 import math
+import ast
 import secrets
 import tkinter as tk
 from sympy import mod_inverse
@@ -25,6 +26,7 @@ KeyPair = {}
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 selected_algorithm = None
 myusername = []
+
 
 def GenerateKeyPair():
     Prime = 307
@@ -81,9 +83,7 @@ def listen_for_messages_from_server(client):
                 username = message.split("~")[0]
                 PK = message.split("~")[1]
                 if myusername[0] != username:
-                    KeyPair["SessionKey"] = (
-                        int(PK) ** KeyPair["PrivateKey"] % 307
-                    )
+                    KeyPair["SessionKey"] = int(PK) ** KeyPair["PrivateKey"] % 307
                 print(message)
             else:
                 messagebox.showerror("Error", "Message recevied from client is empty")
@@ -152,27 +152,31 @@ def send_message():
         if selected_algorithm == "Caesar cipher":
             shift = random.randint(1, 10)
             encrypted_message = encrypt_caesar(message, shift)
-            client.sendto(f"{encrypted_message}~{selected_algorithm}".encode(), (HOST, PORT))
+            client.sendto(
+                f"{encrypted_message}~{selected_algorithm}".encode(), (HOST, PORT)
+            )
         if selected_algorithm == "Two keys (RSA)":
             encrypted_message = encrypt(message, KeyPair["PublicKey"])
             client.sendto(
                 f"{encrypted_message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode(),
-                (HOST, PORT)
+                (HOST, PORT),
             )
         if selected_algorithm == "RC4":
             rc4_key = str(secrets.token_bytes(key_length_bits // 8))
             encrypted_message, decrypted_result = RC4_encrypt_decrypt(message, rc4_key)
-            client.sendto(f"{encrypted_message}~{selected_algorithm}".encode(), (HOST, PORT))
+            client.sendto(
+                f"{encrypted_message}~{selected_algorithm}".encode(), (HOST, PORT)
+            )
         if selected_algorithm == "Two keys (EL GAMAL)":
             encrypt_elgamal(message)
             client.sendto(
                 f"{encrypted_message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode(),
-                (HOST, PORT)
+                (HOST, PORT),
             )
         else:
             client.sendto(
                 f"{message}~{selected_algorithm}~{KeyPair['PublicKey']}".encode(),
-                (HOST, PORT)
+                (HOST, PORT),
             )
         message_textbox.delete(0, len(message))
     else:
@@ -539,15 +543,19 @@ def encrypt_elgamal(plaintext_list):
 
 
 def decrypt_elgamal(ciphertext_list):
-    p, _, _ = KeyPair["SessionKey"]
+    list_of_tuples = [tuple(pair) for pair in ast.literal_eval(ciphertext_list)]
+
+    print(f"ciphertext_list : {list_of_tuples}")
+    p = KeyPair["SessionKey"]
     dh_private_key = KeyPair["PrivateKey"]
     decrypted_list = []
 
-    for c1, c2 in ciphertext_list:
+    for c1, c2 in list_of_tuples:
         s = pow(c1, dh_private_key, p)  # Use dh_private_key instead of a
         s_inv = mod_inverse(s, p)
         plaintext = (c2 * s_inv) % p
         decrypted_list.append(plaintext)
+
     decrypted_list = "".join(
         [chr(char) if 32 <= char <= 126 else "<?>" for char in decrypted_list]
     )
@@ -622,8 +630,8 @@ def decrypt_button_click():
         decrypted_entry.delete(0, tk.END)
         decrypted_entry.insert(0, decrypted_message)
     elif selected_val == "Two keys (EL GAMAL)":
-        decrypted_message = decrypt_elgamal(message)
-        print(f"decrypted_message Elgamal : {decrypted_message}")
+        # print(f"cipher msg Elgamal : {message}")
+        decrypted_message = decrypt_elgamal(ciphertext_hex)
         decrypted_entry.delete(0, tk.END)
         decrypted_entry.insert(0, decrypted_message)
     elif selected_val == "Two keys (RSA)":
