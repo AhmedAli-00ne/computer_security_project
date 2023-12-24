@@ -74,7 +74,7 @@ def listen_for_messages_from_server(client):
                 content = message.split("~")[1]
                 enctype = message.split("~")[2]
                 if enctype[0] == "C" or "c":
-                    csr = int(enctype[-1])
+                    csr = int(enctype[0][-1])
                 if myusername[0] != username:
                     KeyPair["SessionKey"] = (
                         int(message.split("~")[3]) ** KeyPair["PrivateKey"] % 307
@@ -673,7 +673,7 @@ def decrypt_button_click(ciphertext_hex, selected_val,csr):
         decrypted_entry.insert(0, decrypted_message)
         return decrypted_message
     elif selected_val == "Caesar cipher":
-        decrypted_message = decrypt_caesar(ciphertext_hex, csr)
+        decrypted_message = decrypt_caesar(ciphertext_hex, shift)
         decrypted_entry.delete(0, tk.END)
         decrypted_entry.insert(0, decrypted_message)
         return decrypted_message
