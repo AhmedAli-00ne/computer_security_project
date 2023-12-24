@@ -2,7 +2,7 @@ import socket
 import threading
 import time
 
-HOST = "192.168.100.3"
+HOST = "192.168.100.11"
 PORT = 5555
 LISTENER_LIMIT = 5
 active_clients = []
