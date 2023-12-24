@@ -2,7 +2,7 @@ import socket
 import threading
 import time
 
-HOST = "192.168.1.18"
+HOST = "192.168.100.3"
 PORT = 5555
 LISTENER_LIMIT = 5
 active_clients = []
@@ -12,11 +12,7 @@ active_clients = []
 def listen_for_messages(client, username):
     while 1:
         message = client.recv(2048).decode("utf-8")
-        if message != "":
-            final_msg = username + "~" + message
-        message = client.recv(2048).decode('utf-8')
         if message != '':
-            
             final_msg = username + '~' + message
             send_messages_to_all(final_msg)
         else:

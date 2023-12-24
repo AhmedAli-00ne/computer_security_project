@@ -84,7 +84,6 @@ def listen_for_messages_from_server(client):
                     KeyPair["SessionKey"] = (
                         int(PK) ** KeyPair["PrivateKey"] % 307
                     )
-                print(message)
             else:
                 messagebox.showerror("Error", "Message recevied from client is empty")
 
@@ -93,7 +92,6 @@ def add_message(message):
     message_box.config(state=tk.NORMAL)
     message_box.insert(tk.END, message + "\n")
     message_box.config(state=tk.DISABLED)
-    print(myusername)
 
 
 def on_combobox_select(event):
@@ -562,6 +560,7 @@ key_length_bits = 128
 
 
 def encrypt_button_click():
+    print("encrypt")
     message = message_textbox.get()
     selected_val = combo_var.get()
 
